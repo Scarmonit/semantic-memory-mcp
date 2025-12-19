@@ -5,7 +5,7 @@ databases:
   - name: semantic-memory-db
     databaseName: semantic_memory
     user: semantic_memory
-    plan: starter
+    plan: basic-1gb
     postgresMajorVersion: "16"
 
 services:
