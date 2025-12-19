@@ -73,12 +73,20 @@ export async function generateEmbeddings(texts) {
  * @returns {Promise<{available: boolean, model?: string, error?: string}>}
  */
 export async function checkOllamaHealth() {
+  const TIMEOUT_MS = 3000; // 3 second timeout for health checks
+
   try {
-    // Check if Ollama is running
-    const response = await fetch(`${config.ollamaUrl}/api/tags`, {
-      method: 'GET',
-      signal: AbortSignal.timeout(5000),
+    // Create a timeout promise that rejects
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Ollama health check timed out')), TIMEOUT_MS);
     });
+
+    // Race between the fetch and the timeout
+    const fetchPromise = fetch(`${config.ollamaUrl}/api/tags`, {
+      method: 'GET',
+    });
+
+    const response = await Promise.race([fetchPromise, timeoutPromise]);
 
     if (!response.ok) {
       return { available: false, error: 'Ollama not responding' };
