@@ -12,9 +12,14 @@ export const config = {
   dbPoolSize: parseInt(process.env.DB_POOL_SIZE || '10', 10),
 
   // Embeddings
+  embeddingProvider: process.env.EMBEDDING_PROVIDER || 'ollama', // 'ollama' | 'openai'
   ollamaUrl: process.env.OLLAMA_URL || 'http://localhost:11434',
   embeddingModel: process.env.EMBEDDING_MODEL || 'nomic-embed-text',
   embeddingDimension: parseInt(process.env.EMBEDDING_DIMENSION || '768', 10),
+
+  // OpenAI (fallback embedding provider for production)
+  openaiApiKey: process.env.OPENAI_API_KEY || '',
+  openaiEmbeddingModel: process.env.OPENAI_EMBEDDING_MODEL || 'text-embedding-3-small',
 
   // Hybrid Search Weights
   semanticWeight: parseFloat(process.env.SEMANTIC_WEIGHT || '0.8'),

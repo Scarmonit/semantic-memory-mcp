@@ -1,10 +1,16 @@
 # Claude Code Project Context
 
-**Version: 1.0.0**
+**Version: 1.1.0**
 
 ## Project Overview
 
 **semantic-memory-mcp** is an MCP (Model Context Protocol) server providing persistent semantic memory for AI agents using PostgreSQL + pgvector. It enables agents to store, search, and recall memories based on meaning rather than keywords.
+
+## What's New in v1.1.0
+
+- **Multi-Provider Embeddings**: Support for both Ollama (local) and OpenAI (cloud)
+- **Production-Ready**: OpenAI embeddings work on Render without local GPU
+- **Automatic Dimension Normalization**: Handles embedding dimension mismatches
 
 ## Architecture
 
@@ -28,7 +34,7 @@ semantic-memory-mcp/
 │   ├── forget.js              # Memory decay/removal
 │   └── reinforce.js           # Strengthen memories
 ├── embeddings/
-│   └── generator.js           # Ollama embedding client
+│   └── generator.js           # Multi-provider embedding client (Ollama/OpenAI)
 └── utils/
     ├── hybrid-search.js       # 80/20 semantic/recency scoring
     └── security.js            # Input validation
@@ -83,10 +89,21 @@ recency = e^(-days_since_access / 30)
 |----------|---------|-------------|
 | `PORT` | 3325 | Server port |
 | `DATABASE_URL` | - | PostgreSQL connection |
-| `OLLAMA_URL` | http://localhost:11434 | Ollama API |
-| `EMBEDDING_MODEL` | nomic-embed-text | 768-dim embeddings |
+| `EMBEDDING_PROVIDER` | ollama | 'ollama' or 'openai' |
+| `OLLAMA_URL` | http://localhost:11434 | Ollama API (local) |
+| `EMBEDDING_MODEL` | nomic-embed-text | Ollama model name |
+| `EMBEDDING_DIMENSION` | 768 | Vector dimension |
+| `OPENAI_API_KEY` | - | OpenAI API key (for cloud) |
+| `OPENAI_EMBEDDING_MODEL` | text-embedding-3-small | OpenAI model |
 | `SEMANTIC_WEIGHT` | 0.8 | Semantic similarity weight |
 | `RECENCY_WEIGHT` | 0.2 | Recency decay weight |
+
+### Production Setup (Render)
+```bash
+# Set in Render dashboard
+EMBEDDING_PROVIDER=openai
+OPENAI_API_KEY=sk-...
+```
 
 ## Database Requirements
 

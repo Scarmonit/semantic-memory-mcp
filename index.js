@@ -3,7 +3,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { config } from './config.js';
 import { checkHealth as checkDbHealth, closePool } from './db/pool.js';
-import { checkOllamaHealth } from './embeddings/generator.js';
+import { checkEmbeddingHealth } from './embeddings/generator.js';
 import { toolDefinitions, executeTool } from './tools/index.js';
 
 const app = express();
@@ -37,24 +37,26 @@ app.use((req, res, next) => {
 // =============================================================================
 app.get('/health', async (req, res) => {
   try {
-    const [dbHealth, ollamaHealth] = await Promise.all([
+    const [dbHealth, embeddingHealth] = await Promise.all([
       checkDbHealth(),
-      checkOllamaHealth(),
+      checkEmbeddingHealth(),
     ]);
 
     // Core health: database must be connected with pgvector
-    // Ollama is optional - service is degraded without it but still functional for reads
+    // Embedding service is optional - service is degraded without it but still functional for reads
     const coreHealthy = dbHealth.connected && dbHealth.pgvector;
-    const fullyHealthy = coreHealthy && ollamaHealth.available;
+    const fullyHealthy = coreHealthy && embeddingHealth.available;
 
     res.status(coreHealthy ? 200 : 503).json({
       status: fullyHealthy ? 'healthy' : (coreHealthy ? 'degraded' : 'unhealthy'),
       service: 'semantic-memory-mcp',
-      version: '1.0.0',
+      version: '1.1.0',
       timestamp: new Date().toISOString(),
       database: dbHealth,
-      embeddings: ollamaHealth,
-      note: !ollamaHealth.available ? 'Embedding service unavailable - store_memory and search_memory require external Ollama' : undefined,
+      embeddings: embeddingHealth,
+      note: !embeddingHealth.available
+        ? `Embedding service unavailable (${embeddingHealth.provider || 'unknown'}) - store_memory and search_memory require embeddings`
+        : undefined,
     });
   } catch (error) {
     res.status(503).json({
@@ -203,12 +205,13 @@ app.use((req, res) => {
 const server = app.listen(config.port, config.host, () => {
   console.log(`
 ╔════════════════════════════════════════════════════════════╗
-║           Semantic Memory MCP Server v1.0.0               ║
+║           Semantic Memory MCP Server v1.1.0               ║
 ╠════════════════════════════════════════════════════════════╣
 ║  Status:    Running                                        ║
 ║  Port:      ${config.port.toString().padEnd(44)}║
 ║  Host:      ${config.host.padEnd(44)}║
 ║  Env:       ${config.nodeEnv.padEnd(44)}║
+║  Embeddings: ${config.embeddingProvider.padEnd(43)}║
 ╠════════════════════════════════════════════════════════════╣
 ║  Endpoints:                                                ║
 ║    GET  /health      - Health check                        ║

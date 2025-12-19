@@ -31,7 +31,14 @@ services:
         value: "0.0.0.0"
       - key: DB_POOL_SIZE
         value: "10"
-      # Ollama settings - use external Ollama or local
+      # Embedding provider: 'ollama' (local) or 'openai' (cloud)
+      - key: EMBEDDING_PROVIDER
+        value: "openai"
+      - key: OPENAI_API_KEY
+        sync: false  # Set manually in Render dashboard
+      - key: OPENAI_EMBEDDING_MODEL
+        value: "text-embedding-3-small"
+      # Ollama settings (for local development)
       - key: OLLAMA_URL
         value: "http://localhost:11434"
       - key: EMBEDDING_MODEL
