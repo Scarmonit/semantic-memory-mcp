@@ -40,11 +40,18 @@ async function migrate() {
     const statements = processed
       .split(';')
       .map(s => s.trim())
-      .filter(s => s.length > 0 && !s.startsWith('--'))
+      .filter(s => s.length > 0)
       .map(s => {
         // Restore function bodies
-        return s.replace(/__FUNC_BODY_(\d+)__/g, (_, idx) => functionBodies[parseInt(idx)]);
-      });
+        s = s.replace(/__FUNC_BODY_(\d+)__/g, (_, idx) => functionBodies[parseInt(idx)]);
+        // Strip leading comment lines (but keep inline comments)
+        const lines = s.split('\n');
+        while (lines.length > 0 && lines[0].trim().startsWith('--')) {
+          lines.shift();
+        }
+        return lines.join('\n').trim();
+      })
+      .filter(s => s.length > 0);
 
     console.log(`Executing ${statements.length} SQL statements...`);
 
