@@ -42,15 +42,19 @@ app.get('/health', async (req, res) => {
       checkOllamaHealth(),
     ]);
 
-    const healthy = dbHealth.connected && dbHealth.pgvector && ollamaHealth.available;
+    // Core health: database must be connected with pgvector
+    // Ollama is optional - service is degraded without it but still functional for reads
+    const coreHealthy = dbHealth.connected && dbHealth.pgvector;
+    const fullyHealthy = coreHealthy && ollamaHealth.available;
 
-    res.status(healthy ? 200 : 503).json({
-      status: healthy ? 'healthy' : 'degraded',
+    res.status(coreHealthy ? 200 : 503).json({
+      status: fullyHealthy ? 'healthy' : (coreHealthy ? 'degraded' : 'unhealthy'),
       service: 'semantic-memory-mcp',
       version: '1.0.0',
       timestamp: new Date().toISOString(),
       database: dbHealth,
       embeddings: ollamaHealth,
+      note: !ollamaHealth.available ? 'Embedding service unavailable - store_memory and search_memory require external Ollama' : undefined,
     });
   } catch (error) {
     res.status(503).json({
