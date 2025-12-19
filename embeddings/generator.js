@@ -140,10 +140,10 @@ export async function checkEmbeddingHealth() {
   }
 
   // Default to Ollama
-  return checkOllamaHealth(TIMEOUT_MS);
+  return _checkOllamaHealth(TIMEOUT_MS);
 }
 
-async function checkOllamaHealth(timeoutMs) {
+async function _checkOllamaHealth(timeoutMs) {
   try {
     const timeoutPromise = new Promise((_, reject) => {
       setTimeout(() => reject(new Error('Ollama health check timed out')), timeoutMs);
