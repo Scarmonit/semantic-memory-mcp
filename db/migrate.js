@@ -25,11 +25,26 @@ async function migrate() {
     const schemaPath = path.join(__dirname, 'schema.sql');
     const schema = fs.readFileSync(schemaPath, 'utf-8');
 
-    // Split by semicolons and execute each statement
-    const statements = schema
+    // Split by semicolons, but preserve function bodies (inside $$ ... $$)
+    // Replace semicolons inside $$ blocks with placeholder, then restore
+    let processed = schema;
+    const functionBodies = [];
+
+    // Extract function bodies (between $$ markers)
+    processed = processed.replace(/\$\$[\s\S]*?\$\$/g, (match) => {
+      functionBodies.push(match);
+      return `__FUNC_BODY_${functionBodies.length - 1}__`;
+    });
+
+    // Now split by semicolons
+    const statements = processed
       .split(';')
       .map(s => s.trim())
-      .filter(s => s.length > 0 && !s.startsWith('--'));
+      .filter(s => s.length > 0 && !s.startsWith('--'))
+      .map(s => {
+        // Restore function bodies
+        return s.replace(/__FUNC_BODY_(\d+)__/g, (_, idx) => functionBodies[parseInt(idx)]);
+      });
 
     console.log(`Executing ${statements.length} SQL statements...`);
 
